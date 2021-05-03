@@ -1,0 +1,4 @@
+requests
+conda-build
+pyyaml
+openpyxl
