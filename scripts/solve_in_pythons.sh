@@ -3,7 +3,7 @@
 # Copyright (c) Semi-ATE
 # Distributed under the terms of the MIT License
 
-set -ex
+set -iex
 
 # Latest 3.6 CPython
 conda create -n py36 mamba python=3.6 --yes
