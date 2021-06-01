@@ -6,9 +6,9 @@
 set -ex
 
 # Latest 3.6 CPython
-conda create -n py36 mamba python=3.6 --yes
+conda create -n py36 mamba python=3.6 --yes --channel conda-forge
 conda activate py36
-mamba install --file ./maxiconda-bot/requirements.txt --yes
+mamba install --file ./maxiconda-bot/requirements.txt --yes --channel conda-forge
 python ./maxiconda-bot/scripts/solve.py
 
 # # Latest 3.6 PyPy
@@ -18,9 +18,9 @@ python ./maxiconda-bot/scripts/solve.py
 # pypy3.6 ./maxiconda-bot/scripts/solve.py
 
 # Latest 3.7 CPython
-conda create -n py36 mamba python=3.6 --yes
+conda create -n py36 mamba python=3.6 --yes --channel conda-forge
 conda activate py36
-mamba install --file ./maxiconda-bot/requirements.txt --yes
+mamba install --file ./maxiconda-bot/requirements.txt --yes --channel conda-forge
 python ./maxiconda-bot/scripts/solve.py
 
 # # Latest 3.7 PyPy
@@ -30,13 +30,13 @@ python ./maxiconda-bot/scripts/solve.py
 # pypy3.7 ./maxiconda-bot/scripts/solve.py
 
 # Latest 3.8 CPython
-conda create -n py38 mamba python=3.8 --yes
+conda create -n py38 mamba python=3.8 --yes --channel conda-forge
 conda activate py38
-mamba install --file ./maxiconda-bot/requirements.txt --yes
+mamba install --file ./maxiconda-bot/requirements.txt --yes --channel conda-forge
 python ./maxiconda-bot/scripts/solve.py
 
 # Latest 3.9 CPython
-conda create -n py39 mamba python=3.9 --yes
+conda create -n py39 mamba python=3.9 --yes --channel conda-forge
 conda activate py39
-mamba install --file ./maxiconda-bot/requirements.txt --yes
+mamba install --file ./maxiconda-bot/requirements.txt --yes --channel conda-forge
 python ./maxiconda-bot/scripts/solve.py
