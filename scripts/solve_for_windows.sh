@@ -5,4 +5,4 @@
 
 set -ex
 
-source solve_in_pythons.sh
+source scripts/solve_in_pythons.sh
