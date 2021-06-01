@@ -1,6 +1,6 @@
 name: bot action
 
-on: [push]
+on: [push, pull_request]
   # schedule:
   #   - cron: 0 0 * * *
 
@@ -36,6 +36,7 @@ jobs:
       if: contains(matrix.VM, 'windows-latest')
 
     - name: solve
+      shell: bash -l {0}
       env:
         OS: ${{ matrix.OS }}
         CPU: ${{ matrix.CPU }}
@@ -51,12 +52,9 @@ jobs:
           bash scripts/solve_for_macos.sh;
         fi
         if [[ "$OS_NAME" == "Windows" ]]; then
-          source /c/Miniconda3/Scripts/activate;
           source scripts/solve_for_windows.sh;
         fi
-      shell: bash
 
     - name: commit and push
+      shell: bash -l {0}
       run: echo commit and push $${{ secrets.GITHUB_TOKEN }}
-      shell: bash
-
