@@ -133,14 +133,17 @@ def main(python_version: str, matrix_fpath: Path, primary_packages_fpath: Path, 
         
         print("   solution:")
         solution = solve(designator, environment, packages, solutions_path, python_version)
-        print(f"      python = {solution['python']}")
-        print(f"      {len(solution['primary'])} primary packages:")
-        for package in solution['primary']:
-            if package != 'python':
-                print(f"         {package} = {solution['primary'][package]}")
-        print(f"      {len(solution['secondary'])} secondary packages:")
-        for package in solution['secondary']:
-            print(f"         {package} = {solution['secondary'][package]}")
+        if solution:
+            print(f"      python = {solution['python']}")
+            print(f"      {len(solution['primary'])} primary packages:")
+            for package in solution['primary']:
+                if package != 'python':
+                    print(f"         {package} = {solution['primary'][package]}")
+            print(f"      {len(solution['secondary'])} secondary packages:")
+            for package in solution['secondary']:
+                print(f"         {package} = {solution['secondary'][package]}")
+        else:
+            print(f"No solution found!")
 
 
 def run_mamba(pkgs, channels=["conda-forge"]):
@@ -160,7 +163,12 @@ def run_mamba(pkgs, channels=["conda-forge"]):
 
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, _ = p.communicate()
-    data = json.loads(stdout)
+    data = {}
+    try:
+        data = json.loads(stdout)
+    except Exception:
+        pass
+
     return data
 
 
@@ -170,6 +178,9 @@ def solve(designator, environment, primary_packages, solutions_path, python_vers
     retval = {}
     OS_CPU, PY = designator.split('_')
     data = run_mamba(primary_packages + [f"python=={python_version}"])
+
+    if not data:
+        return
 
     packages = {}
     for element in data['actions']['LINK']:
