@@ -45,7 +45,7 @@ jobs:
         DOCKER_IMG: ${{ matrix.DOCKER_IMG }}
         DOCKER_ARCH: ${{ matrix.DOCKER_ARCH }}
       run: |
-        bash scripts/solve_in_pythons.sh;
+        bash scripts/solve_for_windows.sh;
         # if [[ "$OS_NAME" == "Linux" ]]; then
         #   bash scripts/solve_for_linux.sh;
         # fi
