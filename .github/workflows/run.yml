@@ -52,7 +52,7 @@ jobs:
         DOCKER_IMG: ${{ matrix.DOCKER_IMG }}
         DOCKER_ARCH: ${{ matrix.DOCKER_ARCH }}
       run: |
-        python solve.py
+        python scripts/solve.py
 
     - name: commit and push
       shell: bash
