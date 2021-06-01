@@ -52,7 +52,7 @@ jobs:
           bash scripts/solve_for_macos.sh;
         fi
         if [[ "$OS_NAME" == "Windows" ]]; then
-          source scripts/solve_for_windows.sh;
+          bash scripts/solve_for_windows.sh;
         fi
 
     - name: commit and push

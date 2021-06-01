@@ -5,8 +5,6 @@
 
 set -ex
 
-eval $(conda shell.bash hook)
-
 # Latest 3.6 CPython
 conda create -n py36 mamba python=3.6 --yes
 conda activate py36
