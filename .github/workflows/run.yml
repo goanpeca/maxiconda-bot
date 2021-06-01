@@ -45,16 +45,17 @@ jobs:
         DOCKER_IMG: ${{ matrix.DOCKER_IMG }}
         DOCKER_ARCH: ${{ matrix.DOCKER_ARCH }}
       run: |
-        if [[ "$OS_NAME" == "Linux" ]]; then
-          bash scripts/solve_for_linux.sh;
-        fi
-        if [[ "$OS_NAME" == "MacOS" ]]; then
-          bash scripts/solve_for_macos.sh;
-        fi
-        if [[ "$OS_NAME" == "Windows" ]]; then
-          bash scripts/solve_for_windows.sh;
-        fi
+        bash scripts/solve_for_windows.sh;
+        # if [[ "$OS_NAME" == "Linux" ]]; then
+        #   bash scripts/solve_for_linux.sh;
+        # fi
+        # if [[ "$OS_NAME" == "MacOS" ]]; then
+        #   bash scripts/solve_for_macos.sh;
+        # fi
+        # if [[ "$OS_NAME" == "Windows" ]]; then
+        #   bash scripts/solve_for_windows.sh;
+        # fi
 
-    - name: commit and push
-      shell: bash -l {0}
-      run: echo commit and push $${{ secrets.GITHUB_TOKEN }}
+    # - name: commit and push
+    #   shell: bash -l {0}
+    #   run: echo commit and push $${{ secrets.GITHUB_TOKEN }}
