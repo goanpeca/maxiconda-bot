@@ -1,0 +1,12 @@
+name: maxiconda-bot
+
+channels:
+  - conda-forge
+
+dependencies:
+  - conda-build
+  - mamba
+  - openpyxl
+  - python
+  - pyyaml
+  - requests

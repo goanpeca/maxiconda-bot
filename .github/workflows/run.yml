@@ -1,4 +1,4 @@
-name: bot action
+name: Bot action
 
 on: [push, pull_request]
   # schedule:
@@ -15,25 +15,33 @@ jobs:
           - VM: windows-latest
             OS: win-64
             CPU: x86_64
-            PY: py38
             PY_IMPL: py
-            PY_VER: 38
-          # - VM: linux-latest
-          #   OS: 
-
+          - VM: ubuntu-latest
+            OS: linux-64
+            CPU: x86_64
+            PY_IMPL: py
+          - VM: macos-latest
+            OS: osx-64
+            CPU: x86_64
+            PY_IMPL: py
           
     steps:
     - name: Checkout maxiconda-bot
       uses: actions/checkout@v2
 
     - name: Checkout maxiconda-envs
-      run: git clone https://github.com/Semi-ATE/maxiconda-envs.git
+      run: |
+        ls
+        cd ..
+        git clone https://github.com/Semi-ATE/maxiconda-envs.git
+        ls
 
-    - name: Windows specific setup
+    - name: Setup conda environment
       uses: conda-incubator/setup-miniconda@v2
       with:
-        miniconda-version: "latest"
-      if: contains(matrix.VM, 'windows-latest')
+        miniconda-version: latest
+        activate-environment: maxiconda-bot
+        environment-file: environment.yml
 
     - name: solve
       shell: bash -l {0}
@@ -41,21 +49,15 @@ jobs:
         OS: ${{ matrix.OS }}
         CPU: ${{ matrix.CPU }}
         PY: ${{ matrix.PY}}
-
         DOCKER_IMG: ${{ matrix.DOCKER_IMG }}
         DOCKER_ARCH: ${{ matrix.DOCKER_ARCH }}
       run: |
-        bash -l scripts/solve_for_windows.sh;
-        # if [[ "$OS_NAME" == "Linux" ]]; then
-        #   bash scripts/solve_for_linux.sh;
-        # fi
-        # if [[ "$OS_NAME" == "MacOS" ]]; then
-        #   bash scripts/solve_for_macos.sh;
-        # fi
-        # if [[ "$OS_NAME" == "Windows" ]]; then
-        #   bash scripts/solve_for_windows.sh;
-        # fi
+        python solve.py
 
-    # - name: commit and push
-    #   shell: bash -l {0}
-    #   run: echo commit and push $${{ secrets.GITHUB_TOKEN }}
+    - name: commit and push
+      shell: bash
+      run: |
+          cd ..
+          cd maxiconda-envs
+          git status
+          echo commit and push $${{ secrets.GITHUB_TOKEN }}
