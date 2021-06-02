@@ -171,8 +171,9 @@ jobs:
 
     - name: Push changes
       uses: ad-m/github-push-action@master
+      env:
+        INPUT_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
       with:
-        github_token: ${{ secrets.TOKEN_GITHUB }}
         branch: main
         directory: "../maxiconda-envs"
         repository: Semi-ATE/maxiconda-envs
