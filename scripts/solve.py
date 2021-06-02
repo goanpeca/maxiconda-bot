@@ -181,13 +181,18 @@ def solve(designator, environment, primary_packages, solutions_path, python_vers
     """
     retval = {}
     OS_CPU, PY = designator.split('_')
-    primary_pkgs = primary_packages[:]
+
     if PY.startswith("pypy"):
-        primary_pkgs.remove(f"pypy{python_version}")
-        data = run_mamba(primary_pkgs + [f"pypy{python_version}"])
+        package_name = f"pypy{python_version}"
+        package_name_version = f"pypy{python_version}"
     else:
-        primary_pkgs.remove(f"python")
-        data = run_mamba(primary_pkgs + [f"python=={python_version}"])
+        package_name = f"python"
+        package_name_version = f"python={python_version}"
+
+
+    primary_pkgs = primary_packages[:]
+    primary_pkgs.remove(package_name)
+    data = run_mamba(primary_pkgs + [package_name_version])
 
     if not data:
         return
@@ -207,24 +212,15 @@ def solve(designator, environment, primary_packages, solutions_path, python_vers
     with open(solution_fpath, 'w') as fh:
         fh.write(f"# {OS_CPU}/{PY}/{environment}\n")
 
-        if PY.startswith("pypy"):
-            fh.write(f"\npypy {packages['pypy']}\n")
-            retval['pypy'] = packages['pypy']
-        else:
-            fh.write(f"\npython {packages['python']}\n")
-            retval['python'] = packages['python']
+        fh.write(f"\n{package_name} {packages[package_name]}\n")
+        retval[package_name] = packages[package_name]
 
         fh.write(f"\n# {len(primary_packages)-1} primary packages :\n\n")
         retval['primary'] = {}
         for primary_package in sorted(primary_packages):
-            if PY.startswith("pypy"):
-                if primary_package != 'pypy':
-                    fh.write(f"{primary_package} = {packages[primary_package]}\n")
-                    retval['primary'][primary_package] = packages[primary_package]
-            else:
-                if primary_package != 'python':
-                    fh.write(f"{primary_package} = {packages[primary_package]}\n")
-                    retval['primary'][primary_package] = packages[primary_package]
+            if primary_package != package_name:
+                fh.write(f"{primary_package} = {packages[primary_package]}\n")
+                retval['primary'][primary_package] = packages[primary_package]
 
         fh.write(f"\n# {len(secondary_packages)} secondary packages :\n\n")
         retval['secondary'] = {}
@@ -314,8 +310,11 @@ def get_conda_forge_packages(designator):
 
 
 if __name__ == '__main__':
-    for python_version in ["3.6", "3.8", "3.9"]:
-        for py_implementation in ["cpython"]:
+    for python_version in ["3.6", "3.7", "3.8", "3.9"]:
+        for py_implementation in ["cpython", "pypy"]:
+            if platform.system() == "Linux" and python_version == "3.7":
+                continue
+
             main(
                 python_version,
                 py_implementation,
