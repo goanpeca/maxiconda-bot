@@ -17,7 +17,10 @@ jobs:
           
     steps:
     - name: Checkout maxiconda-bot
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
+      with:
+        persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+        fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
 
     - name: Checkout maxiconda-envs
       run: |
@@ -49,14 +52,16 @@ jobs:
       run: |
         cd ..
         cd maxiconda-envs
-        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git commit -m "Update packages ${{ matrix.VM }}" -a
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "Update packages ${{ matrix.VM }}"
 
     - name: Push changes
       uses: ad-m/github-push-action@v0.6.0
       with:
-        github_token: ${{ secrets.TOKEN_GITHUB }}
+        # github_token: ${{ secrets.TOKEN_GITHUB }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: main
         directory: "../maxiconda-envs"
         repository: Semi-ATE/maxiconda-envs
@@ -75,7 +80,10 @@ jobs:
 
     steps:
     - name: Checkout maxiconda-bot
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
+      with:
+        persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+        fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
 
     - name: Checkout maxiconda-envs
       run: |
@@ -133,7 +141,10 @@ jobs:
           
     steps:
     - name: Checkout maxiconda-bot
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
+      with:
+        persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+        fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
 
     - name: Checkout maxiconda-envs
       run: |
