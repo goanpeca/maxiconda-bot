@@ -25,7 +25,8 @@ PRIMARY_PACKAGES_FPATH = ROOT / "maxiconda-envs/specs/primary_packages.yaml"
 SOLUTIONS_PATH = ROOT / "maxiconda-envs/specs/solutions"
 CACHE = {}
 
-def get_running_env(python_version: str = '') -> Tuple[str, str, str]:
+
+def get_running_env(python_version: str = '', py_implementation: str = '') -> Tuple[str, str, str]:
     """ 
     This function will determine on what environment is running and returns the tuple (OS, CPU, PY).
 
@@ -50,11 +51,8 @@ def get_running_env(python_version: str = '') -> Tuple[str, str, str]:
     if not is_64bits:
         raise Exception("only 64 bit platforms are supported.")
 
-    CPU = platform.processor()
-    if OS == "MacOS" and CPU == "i386":
-        CPU = "x86_64"
-
-    if CPU not in ["i386", "x86_64", "aarch64"]:  # what is the M1 returning?!? ... I presume `aarch64`
+    CPU = platform.machine()
+    if CPU not in ["x86_64", "aarch64"]:  # what is the M1 returning?!? ... I presume `aarch64`
         raise Exception(f"'{CPU}' not supported.")
 
     if python_version and "." in python_version:
@@ -64,9 +62,12 @@ def get_running_env(python_version: str = '') -> Tuple[str, str, str]:
         # Python version provided by current process environment
         python_version_str = "".join(platform.python_version_tuple()[:2])
 
-    if platform.python_implementation() == "CPython":
+    py_implementation = py_implementation if py_implementation else platform.python_implementation()
+    py_implementation = py_implementation.lower()
+
+    if py_implementation == "cpython":
         PY = f"py{python_version_str}"
-    elif platform.python_implementation() == "PyPy":
+    elif py_implementation == "pypy":
         PY = f"pypy{python_version_str}"
     else:
         raise Exception(f"'{platform.python_implementation()}' not supported.")
@@ -74,18 +75,17 @@ def get_running_env(python_version: str = '') -> Tuple[str, str, str]:
     return OS, CPU, PY
 
 
-def main(python_version: str, matrix_fpath: Path, primary_packages_fpath: Path, solutions_path: Path):
+def main(python_version: str, py_implementation: str, matrix_fpath: Path, primary_packages_fpath: Path, solutions_path: Path):
     """
     Run main process to generate environment packages.
-
-    Parameters
-    ----------
-    python_version : Path
-        Python version string. Example: '3.8'.
-    matrix_fpath : Path
-        Path to matrix yaml file.
     """
-    OS, CPU, PY = get_running_env(python_version)
+    OS, CPU, PY = get_running_env(python_version, py_implementation)
+    if PY.startswith("pypy"):
+        package_name = f"pypy{python_version}"
+        package_name_version = f"pypy{python_version}"
+    else:
+        package_name = f"python"
+        package_name_version = f"python={python_version}"
 
     if not matrix_fpath.is_file():
         print(f"couldn't find '{matrix_fpath}'")
@@ -111,18 +111,18 @@ def main(python_version: str, matrix_fpath: Path, primary_packages_fpath: Path, 
         primary_packages = yaml.load(fd, Loader=yaml.FullLoader)
 
     for environment in primary_packages:
-        print(f"{designator.split('_')[0]}/{designator.split('_')[1]}/{environment}:")
+        print(f"\n\n# {designator.split('_')[0]}/{designator.split('_')[1]}/{environment}:")
 
         print("   primary packages:")
         packages = primary_packages[environment]
         for package in packages:
             print(f"      {package}")
 
-        if "python" not in packages:
-            python = f"python=={python_version}"
+        if package_name not in packages:
+            python = package_name_version
             print("   including in primary packages:")
             print(f"      {python}")
-            packages.append(f"python")
+            packages.append(package_name)
 
         packages_to_exclude = reduce(packages, designator)
         if not packages_to_exclude == []:
@@ -134,11 +134,12 @@ def main(python_version: str, matrix_fpath: Path, primary_packages_fpath: Path, 
         print("   solution:")
         solution = solve(designator, environment, packages, solutions_path, python_version)
         if solution:
-            print(f"      python = {solution['python']}")
+            print(f"      {package_name} = {solution[package_name]}")
             print(f"      {len(solution['primary'])} primary packages:")
             for package in solution['primary']:
-                if package != 'python':
+                if package != package_name:
                     print(f"         {package} = {solution['primary'][package]}")
+
             print(f"      {len(solution['secondary'])} secondary packages:")
             for package in solution['secondary']:
                 print(f"         {package} = {solution['secondary'][package]}")
@@ -177,7 +178,13 @@ def solve(designator, environment, primary_packages, solutions_path, python_vers
     """
     retval = {}
     OS_CPU, PY = designator.split('_')
-    data = run_mamba(primary_packages + [f"python=={python_version}"])
+    primary_pkgs = primary_packages[:]
+    if PY.startswith("pypy"):
+        primary_pkgs.remove(f"pypy{python_version}")
+        data = run_mamba(primary_pkgs + [f"pypy{python_version}"])
+    else:
+        primary_pkgs.remove(f"python")
+        data = run_mamba(primary_pkgs + [f"python=={python_version}"])
 
     if not data:
         return
@@ -197,15 +204,24 @@ def solve(designator, environment, primary_packages, solutions_path, python_vers
     with open(solution_fpath, 'w') as fh:
         fh.write(f"# {OS_CPU}/{PY}/{environment}\n")
 
-        fh.write(f"\npython {packages['python']}\n")
-        retval['python'] = packages['python']
+        if PY.startswith("pypy"):
+            fh.write(f"\npypy {packages['pypy']}\n")
+            retval['pypy'] = packages['pypy']
+        else:
+            fh.write(f"\npython {packages['python']}\n")
+            retval['python'] = packages['python']
 
         fh.write(f"\n# {len(primary_packages)-1} primary packages :\n\n")
         retval['primary'] = {}
         for primary_package in sorted(primary_packages):
-            if primary_package != 'python':
-                fh.write(f"{primary_package} = {packages[primary_package]}\n")
-                retval['primary'][primary_package] = packages[primary_package]
+            if PY.startswith("pypy"):
+                if primary_package != 'pypy':
+                    fh.write(f"{primary_package} = {packages[primary_package]}\n")
+                    retval['primary'][primary_package] = packages[primary_package]
+            else:
+                if primary_package != 'python':
+                    fh.write(f"{primary_package} = {packages[primary_package]}\n")
+                    retval['primary'][primary_package] = packages[primary_package]
 
         fh.write(f"\n# {len(secondary_packages)} secondary packages :\n\n")
         retval['secondary'] = {}
@@ -276,8 +292,10 @@ def get_conda_forge_packages(designator):
         if arch['packages'][package]['build'].startswith('py'):
             if not arch['packages'][package]['build'].startswith(PY):
                 continue
+
         if arch['packages'][package]['name'] not in retval:
             retval[arch['packages'][package]['name']] = []
+
         if arch['packages'][package]['version'] not in retval[arch['packages'][package]['name']]:
             retval[arch['packages'][package]['name']].append(arch['packages'][package]['version'])
 
@@ -285,6 +303,7 @@ def get_conda_forge_packages(designator):
     for package in noarch['packages']:
         if noarch['packages'][package]['name'] not in retval:
             retval[noarch['packages'][package]['name']] = []
+
         if noarch['packages'][package]['version'] not in retval[noarch['packages'][package]['name']]:
             retval[noarch['packages'][package]['name']].append(noarch['packages'][package]['version'])
 
@@ -292,10 +311,13 @@ def get_conda_forge_packages(designator):
 
 
 if __name__ == '__main__':
-    for python_version in ["3.6", "3.7", "3.8", "3.9"]:
-        main(
-            python_version,
-            matrix_fpath=MATRIX_FPATH,
-            primary_packages_fpath=PRIMARY_PACKAGES_FPATH,
-            solutions_path=SOLUTIONS_PATH,
-        )
+    # for python_version in ["3.6", "3.7", "3.8", "3.9"]:
+    for python_version in ["3.7"]:
+        for py_implementation in ["cpython"]:
+            main(
+                python_version,
+                py_implementation,
+                matrix_fpath=MATRIX_FPATH,
+                primary_packages_fpath=PRIMARY_PACKAGES_FPATH,
+                solutions_path=SOLUTIONS_PATH,
+            )

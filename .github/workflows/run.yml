@@ -6,7 +6,7 @@ on: [push, pull_request]
 
 jobs:
   solve:
-    name: ${{ matrix.OS }}_${{ matrix.PY }}
+    name: ${{ matrix.OS }}_${{ matrix.PY_IMPL }}
     runs-on: ${{ matrix.VM }}
     strategy:
       fail-fast: false
@@ -14,16 +14,10 @@ jobs:
         include:
           - VM: windows-latest
             OS: win-64
-            CPU: x86_64
-            PY_IMPL: py
           - VM: ubuntu-latest
             OS: linux-64
-            CPU: x86_64
-            PY_IMPL: py
           - VM: macos-latest
             OS: osx-64
-            CPU: x86_64
-            PY_IMPL: py
           
     steps:
     - name: Checkout maxiconda-bot
@@ -42,6 +36,7 @@ jobs:
         miniconda-version: latest
         activate-environment: maxiconda-bot
         environment-file: environment.yml
+        channel-priority: strict
 
     - name: solve
       shell: bash -l {0}
