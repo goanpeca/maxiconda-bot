@@ -56,7 +56,7 @@ jobs:
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
-        github_token: ${{ secrets.ACCESS_TOKEN }}
+        github_token: ${{ secrets.TOKEN_GITHUB }}
         branch: main
         directory: "../maxiconda-envs"
         repository: Semi-ATE/maxiconda-envs
@@ -114,7 +114,7 @@ jobs:
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
-        github_token: ${{ secrets.ACCESS_TOKEN }}
+        github_token: ${{ secrets.TOKEN_GITHUB }}
         branch: main
         directory: "../maxiconda-envs"
         repository: Semi-ATE/maxiconda-envs
@@ -172,7 +172,7 @@ jobs:
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
-        github_token: ${{ secrets.ACCESS_TOKEN }}
+        github_token: ${{ secrets.TOKEN_GITHUB }}
         branch: main
         directory: "../maxiconda-envs"
         repository: Semi-ATE/maxiconda-envs
