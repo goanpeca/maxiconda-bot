@@ -52,7 +52,10 @@ def get_running_env(python_version: str = '', py_implementation: str = '') -> Tu
         raise Exception("only 64 bit platforms are supported.")
 
     CPU = platform.machine()
-    if CPU not in ["x86_64", "aarch64"]:  # what is the M1 returning?!? ... I presume `aarch64`
+    if OS == "Windows":
+        CPU = "x86_64" if CPU == "AMD64" else CPU
+
+    if CPU not in ["AMD64", "x86_64", "aarch64"]:  # what is the M1 returning?!? ... I presume `aarch64`
         raise Exception(f"'{CPU}' not supported.")
 
     if python_version and "." in python_version:
@@ -311,8 +314,7 @@ def get_conda_forge_packages(designator):
 
 
 if __name__ == '__main__':
-    # for python_version in ["3.6", "3.7", "3.8", "3.9"]:
-    for python_version in ["3.7"]:
+    for python_version in ["3.6", "3.8", "3.9"]:
         for py_implementation in ["cpython"]:
             main(
                 python_version,
