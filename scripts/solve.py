@@ -311,7 +311,7 @@ def get_conda_forge_packages(designator):
 
 if __name__ == '__main__':
     for python_version in ["3.6", "3.7", "3.8", "3.9"]:
-        for py_implementation in ["cpython", "pypy"]:
+        for py_implementation in ["cpython"]:
             if platform.system() == "Linux" and python_version == "3.7":
                 continue
 
