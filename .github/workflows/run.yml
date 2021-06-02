@@ -170,10 +170,9 @@ jobs:
         git commit -m "Update packages ${{ matrix.VM }}" -a
 
     - name: Push changes
-      uses: ad-m/github-push-action@master
-      env:
-        INPUT_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+      uses: ad-m/github-push-action@v0.6.0
       with:
+        github_token: ${{ secrets.TOKEN_GITHUB }}
         branch: main
         directory: "../maxiconda-envs"
         repository: Semi-ATE/maxiconda-envs
