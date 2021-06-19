@@ -114,6 +114,10 @@ def main(python_version: str, py_implementation: str, matrix_fpath: Path, primar
         primary_packages = yaml.load(fd, Loader=yaml.FullLoader)
 
     for environment in primary_packages:
+        if environment not in ["maxiconda", "_spyder_"]:
+            print(f"\n\nSkipping {environment}!\n\n")
+            continue
+
         print(f"\n\n# {designator.split('_')[0]}/{designator.split('_')[1]}/{environment}:")
 
         print("   primary packages:")
@@ -157,8 +161,7 @@ def run_solver(pkgs, channels=["conda-forge"], solver="mamba"):
     if solver not in ["conda", "mamba"]:
         raise ValueError("Must use 'conda' or 'mamba' as solver!")
 
-    cmd = [solver, "create", "--name", "test_env", "--dry-run", "--json", "--strict-channel-priority", "--yes"] + pkgs
-    # cmd = [solver, "create", "--name", "test_env", "--dry-run", "--strict-channel-priority", "--yes", "--verbose"] + pkgs
+    cmd = [solver, "create", "--name", "test_env", "--dry-run", "--json", "--yes", "--strict-channel-priority"] + pkgs
     for channel in channels:
         cmd.append("--channel")
         cmd.append(channel)
@@ -228,7 +231,7 @@ def solve(designator, environment, primary_packages, solutions_path, python_vers
         fh.write(f"\n# {len(secondary_packages)} secondary packages :\n\n")
         retval['secondary'] = {}
         for secondary_package in sorted(secondary_packages):
-            fh.write(f"{secondary_package} = {packages[secondary_package]} = {packages[secondary_package]['build_string']}\n")
+            fh.write(f"{secondary_package} = {packages[secondary_package]['version']} = {packages[secondary_package]['build_string']}\n")
             retval['secondary'][secondary_package] = packages[secondary_package]
 
     # os.unlink("solution.json")
@@ -314,8 +317,13 @@ def get_conda_forge_packages(designator):
 
 if __name__ == '__main__':
     solver = "mamba"
+    # for python_version in ["3.7", "3.8", "3.9"]:
     for python_version in ["3.6", "3.7", "3.8", "3.9"]:
         for py_implementation in ["cpython"]:
+            if platform.system() == "Linux" and python_version in ["3.6", "3.7"]:
+                # Mamba is installing pypy on Linux and it should not!
+                solver = "conda"
+
             main(
                 python_version,
                 py_implementation,
