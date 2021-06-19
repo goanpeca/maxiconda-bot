@@ -78,7 +78,7 @@ def get_running_env(python_version: str = '', py_implementation: str = '') -> Tu
     return OS, CPU, PY
 
 
-def main(python_version: str, py_implementation: str, matrix_fpath: Path, primary_packages_fpath: Path, solutions_path: Path):
+def main(python_version: str, py_implementation: str, matrix_fpath: Path, primary_packages_fpath: Path, solutions_path: Path, solver : str = "mamba"):
     """
     Run main process to generate environment packages.
     """
@@ -135,26 +135,30 @@ def main(python_version: str, py_implementation: str, matrix_fpath: Path, primar
                 print(f"      {package}")
         
         print("   solution:")
-        solution = solve(designator, environment, packages, solutions_path, python_version)
+        solution = solve(designator, environment, packages, solutions_path, python_version, solver=solver)
         if solution:
-            print(f"      {package_name} = {solution[package_name]}")
+            print(f"      {package_name} = {solution[package_name]['version']} = {solution[package_name]['build_string']}")
             print(f"      {len(solution['primary'])} primary packages:")
             for package in solution['primary']:
                 if package != package_name:
-                    print(f"         {package} = {solution['primary'][package]}")
+                    print(f"         {package} = {solution['primary'][package]['version']} = {solution['primary'][package]['build_string']}")
 
             print(f"      {len(solution['secondary'])} secondary packages:")
             for package in solution['secondary']:
-                print(f"         {package} = {solution['secondary'][package]}")
+                print(f"         {package} = {solution['secondary'][package]['version']} = {solution['secondary'][package]['build_string']}")
         else:
             print(f"No solution found!")
 
 
-def run_mamba(pkgs, channels=["conda-forge"]):
+def run_solver(pkgs, channels=["conda-forge"], solver="mamba"):
     """
-    Run mamba dry run 
+    Run conda solver dry run. 
     """
-    cmd = ["mamba", "create", "--name", "test_env", "--dry-run", "--json"] + pkgs
+    if solver not in ["conda", "mamba"]:
+        raise ValueError("Must use 'conda' or 'mamba' as solver!")
+
+    cmd = [solver, "create", "--name", "test_env", "--dry-run", "--json", "--strict-channel-priority", "--yes"] + pkgs
+    # cmd = [solver, "create", "--name", "test_env", "--dry-run", "--strict-channel-priority", "--yes", "--verbose"] + pkgs
     for channel in channels:
         cmd.append("--channel")
         cmd.append(channel)
@@ -170,13 +174,13 @@ def run_mamba(pkgs, channels=["conda-forge"]):
     data = {}
     try:
         data = json.loads(stdout)
-    except Exception:
-        pass
+    except Exception as err:
+        print(f"Error: {err}")
 
     return data
 
 
-def solve(designator, environment, primary_packages, solutions_path, python_version):
+def solve(designator, environment, primary_packages, solutions_path, python_version, solver):
     """
     """
     retval = {}
@@ -189,17 +193,16 @@ def solve(designator, environment, primary_packages, solutions_path, python_vers
         package_name = f"python"
         package_name_version = f"python={python_version}"
 
-
     primary_pkgs = primary_packages[:]
     primary_pkgs.remove(package_name)
-    data = run_mamba(primary_pkgs + [package_name_version])
+    data = run_solver(primary_pkgs + [package_name_version], solver=solver)
 
     if not data:
         return
 
     packages = {}
     for element in data['actions']['LINK']:
-        packages[element['name']] = element['version']
+        packages[element['name']] = {"version": element['version'], "build_string": element['build_string']}
 
     secondary_packages = list(packages)
     for primary_package in primary_packages:
@@ -212,20 +215,20 @@ def solve(designator, environment, primary_packages, solutions_path, python_vers
     with open(solution_fpath, 'w') as fh:
         fh.write(f"# {OS_CPU}/{PY}/{environment}\n")
 
-        fh.write(f"\n{package_name} {packages[package_name]}\n")
+        fh.write(f"\n{package_name} = {packages[package_name]['version']} = {packages[package_name]['build_string']}\n")
         retval[package_name] = packages[package_name]
 
         fh.write(f"\n# {len(primary_packages)-1} primary packages :\n\n")
         retval['primary'] = {}
         for primary_package in sorted(primary_packages):
             if primary_package != package_name:
-                fh.write(f"{primary_package} = {packages[primary_package]}\n")
+                fh.write(f"{primary_package} = {packages[primary_package]['version']} = {packages[package_name]['build_string']}\n")
                 retval['primary'][primary_package] = packages[primary_package]
 
         fh.write(f"\n# {len(secondary_packages)} secondary packages :\n\n")
         retval['secondary'] = {}
         for secondary_package in sorted(secondary_packages):
-            fh.write(f"{secondary_package} = {packages[secondary_package]}\n")
+            fh.write(f"{secondary_package} = {packages[secondary_package]} = {packages[secondary_package]['build_string']}\n")
             retval['secondary'][secondary_package] = packages[secondary_package]
 
     # os.unlink("solution.json")
@@ -310,15 +313,14 @@ def get_conda_forge_packages(designator):
 
 
 if __name__ == '__main__':
+    solver = "mamba"
     for python_version in ["3.6", "3.7", "3.8", "3.9"]:
         for py_implementation in ["cpython"]:
-            if platform.system() == "Linux" and python_version == "3.7":
-                continue
-
             main(
                 python_version,
                 py_implementation,
                 matrix_fpath=MATRIX_FPATH,
                 primary_packages_fpath=PRIMARY_PACKAGES_FPATH,
                 solutions_path=SOLUTIONS_PATH,
+                solver=solver,
             )
