@@ -198,7 +198,7 @@ def solve(designator, environment, primary_packages, solutions_path, python_vers
 
     primary_pkgs = primary_packages[:]
     primary_pkgs.remove(package_name)
-    data = run_solver(primary_pkgs + [package_name_version], solver=solver)
+    data = run_solver([package_name_version] + primary_pkgs, solver=solver)
 
     if not data:
         return
@@ -317,13 +317,8 @@ def get_conda_forge_packages(designator):
 
 if __name__ == '__main__':
     solver = "mamba"
-    # for python_version in ["3.7", "3.8", "3.9"]:
     for python_version in ["3.6", "3.7", "3.8", "3.9"]:
         for py_implementation in ["cpython"]:
-            if platform.system() == "Linux" and python_version in ["3.6", "3.7"]:
-                # Mamba is installing pypy on Linux and it should not!
-                solver = "conda"
-
             main(
                 python_version,
                 py_implementation,
